@@ -55,6 +55,12 @@ struct ContentView: View {
                 .frame(width: 150)
                 .help("Texto que se elimina de cada línea sólo para compararla (ej: \"instagram.com/\"), sin tocar lo que se muestra.")
 
+                Button { viewModel.sortLines() } label: {
+                    Image(systemName: viewModel.isSortAscending ? "arrow.up" : "arrow.down")
+                }
+                .accessibilityLabel("Ordenar")
+                .help(viewModel.isSortAscending ? "Ordenar de A a Z / menor a mayor" : "Ordenar de Z a A / mayor a menor")
+
                 Button { viewModel.goToPreviousChange() } label: {
                     Image(systemName: "chevron.up")
                 }

@@ -53,6 +53,7 @@ struct SideBySideDiffView: View {
                     isEditable: true,
                     syncCoordinator: syncCoordinator,
                     onFileDropped: { url in viewModel.handleDrop(url: url, side: side) },
+                    onTextViewReady: { textView in viewModel.registerTextView(textView, for: side) },
                     scrollRequestLine: scrollLine
                 )
                 .onChange(of: text.wrappedValue) { _ in

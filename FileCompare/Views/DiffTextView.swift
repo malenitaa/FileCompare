@@ -22,6 +22,7 @@ struct DiffTextView: NSViewRepresentable {
     var isEditable: Bool
     var syncCoordinator: ScrollSyncCoordinator
     var onFileDropped: (URL) -> Void
+    var onTextViewReady: (NSTextView) -> Void = { _ in }
     @Binding var scrollRequestLine: Int?
 
     private let gutterWidth: CGFloat = 44
@@ -112,6 +113,7 @@ struct DiffTextView: NSViewRepresentable {
         context.coordinator.gutterSync = gutterSync
         applyDiffAttributes(to: codeTextView)
         context.coordinator.appliedRevision = revision
+        onTextViewReady(codeTextView)
         return container
     }
 
