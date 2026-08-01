@@ -15,9 +15,15 @@ final class CompareViewModel: ObservableObject {
     @Published var currentChangeIndex: Int = -1
     @Published var scrollRequestLeftLine: Int?
     @Published var scrollRequestRightLine: Int?
+    /// Direction the *next* "Ordenar" click will use — it alternates, like a
+    /// spreadsheet column-sort arrow, instead of always re-sorting ascending
+    /// (which looks like nothing happened on a second click).
+    @Published private(set) var isSortAscending = true
 
     private var debounceTask: Task<Void, Never>?
     private var computeTask: Task<Void, Never>?
+    private weak var leftTextView: NSTextView?
+    private weak var rightTextView: NSTextView?
 
     init() {
         let recent = RecentFilesStore.load()
@@ -31,6 +37,16 @@ final class CompareViewModel: ObservableObject {
 
     func leftPanelLines() -> [PanelLineInfo] { diffResult.panelLines(for: .left, count: leftLineCount) }
     func rightPanelLines() -> [PanelLineInfo] { diffResult.panelLines(for: .right, count: rightLineCount) }
+
+    /// Lets a panel's own `NSTextView` (and its undo manager) register itself,
+    /// so that programmatic edits we make here — sort, copy — become undoable
+    /// with ⌘Z through the exact same stack as normal typing in that panel.
+    func registerTextView(_ textView: NSTextView, for side: PanelSide) {
+        switch side {
+        case .left: leftTextView = textView
+        case .right: rightTextView = textView
+        }
+    }
 
     func textDidChange(side: PanelSide) {
         scheduleDiff(debounce: true)
@@ -49,6 +65,79 @@ final class CompareViewModel: ObservableObject {
     func toggleIgnoreCase() {
         options.ignoreCase.toggle()
         scheduleDiff(debounce: false)
+    }
+
+    /// Sorts both panels' lines, once — not a continuous option, since
+    /// re-sorting on every keystroke while someone is mid-edit would keep
+    /// yanking their cursor to a different line. Alternates A→Z / Z→A on each
+    /// click, like a spreadsheet's sort arrow.
+    func sortLines() {
+        let oldLeft = leftText
+        let oldRight = rightText
+        let ascending = isSortAscending
+        leftText = Self.sortedText(leftText, ascending: ascending)
+        rightText = Self.sortedText(rightText, ascending: ascending)
+        isSortAscending.toggle()
+        scheduleDiff(debounce: false)
+        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: ascending ? "Ordenar A-Z" : "Ordenar Z-A")
+        focus(.left)
+    }
+
+    private static func sortedText(_ text: String, ascending: Bool) -> String {
+        var lines = LineDiffEngine.splitLines(text)
+        if lines.last == "" {
+            lines.removeLast()
+        }
+        lines.sort { left, right in
+            let order = left.localizedStandardCompare(right)
+            return ascending ? order == .orderedAscending : order == .orderedDescending
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// Cmd+Z only does anything if a panel's own text view is first responder
+    /// (that's whose undo manager we registered with). After a toolbar button
+    /// changes text programmatically, focus is usually still on the button,
+    /// so ⌘Z right afterwards would silently do nothing — move focus into a
+    /// panel so it's immediately undoable.
+    private func focus(_ side: PanelSide) {
+        let textView = side == .left ? leftTextView : rightTextView
+        guard let textView, let window = textView.window else { return }
+        window.makeFirstResponder(textView)
+    }
+
+    /// Registers ⌘Z support for a programmatic change to one or both panels,
+    /// on each affected panel's own text-view undo manager (the same one that
+    /// already undoes regular typing there).
+    private func registerUndo(previousLeft: String, previousRight: String, actionName: String) {
+        if previousLeft != leftText {
+            registerLeftUndo(restoringTo: previousLeft, actionName: actionName)
+        }
+        if previousRight != rightText {
+            registerRightUndo(restoringTo: previousRight, actionName: actionName)
+        }
+    }
+
+    private func registerLeftUndo(restoringTo value: String, actionName: String) {
+        guard let undoManager = leftTextView?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let redoValue = target.leftText
+            target.leftText = value
+            target.scheduleDiff(debounce: false)
+            target.registerLeftUndo(restoringTo: redoValue, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func registerRightUndo(restoringTo value: String, actionName: String) {
+        guard let undoManager = rightTextView?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let redoValue = target.rightText
+            target.rightText = value
+            target.scheduleDiff(debounce: false)
+            target.registerRightUndo(restoringTo: redoValue, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
     }
 
     func scheduleDiff(debounce: Bool) {
@@ -160,11 +249,15 @@ final class CompareViewModel: ObservableObject {
     }
 
     func copy(from side: PanelSide) {
+        let oldLeft = leftText
+        let oldRight = rightText
         switch side {
         case .left: rightText = leftText
         case .right: leftText = rightText
         }
         scheduleDiff(debounce: false)
+        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: "Copiar")
+        focus(side == .left ? .right : .left)
     }
 
     private func persistRecents() {
