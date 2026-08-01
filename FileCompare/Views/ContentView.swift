@@ -47,6 +47,14 @@ struct ContentView: View {
                     set: { _ in viewModel.toggleIgnoreCase() }
                 ))
 
+                TextField("Quitar texto antes de comparar…", text: Binding(
+                    get: { viewModel.options.stripText },
+                    set: { viewModel.setStripText($0) }
+                ))
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 150)
+                .help("Texto que se elimina de cada línea sólo para compararla (ej: \"instagram.com/\"), sin tocar lo que se muestra.")
+
                 Button { viewModel.goToPreviousChange() } label: {
                     Image(systemName: "chevron.up")
                 }

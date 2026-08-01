@@ -41,6 +41,11 @@ final class CompareViewModel: ObservableObject {
         scheduleDiff(debounce: false)
     }
 
+    func setStripText(_ text: String) {
+        options.stripText = text
+        scheduleDiff(debounce: true)
+    }
+
     func toggleIgnoreCase() {
         options.ignoreCase.toggle()
         scheduleDiff(debounce: false)
