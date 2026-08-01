@@ -62,6 +62,12 @@ final class CompareViewModel: ObservableObject {
         scheduleDiff(debounce: true)
     }
 
+    /// Only affects "Conjuntos" mode (see SetDiffEngine) — doesn't touch the
+    /// positional line diff, so no need to recompute that.
+    func toggleIgnoreNoiseLines() {
+        options.ignoreNoiseLines.toggle()
+    }
+
     func toggleIgnoreCase() {
         options.ignoreCase.toggle()
         scheduleDiff(debounce: false)

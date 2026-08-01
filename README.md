@@ -13,7 +13,11 @@ Una app de macOS nativa (Swift + SwiftUI + AppKit, sin Electron) para comparar d
 - Navegación entre cambios: botones en la toolbar o `⌘↓` / `⌘↑`.
 - Contador de líneas agregadas/eliminadas/modificadas en la toolbar.
 - Toggles para ignorar espacios en blanco y mayúsculas/minúsculas al comparar.
+- Texto a quitar antes de comparar (ej. `instagram.com/`) para que dos formatos con distinto prefijo/URL se lean como iguales.
+- Botón de ordenar (A-Z / Z-A) para comparar dos listas sin importar el orden.
+- **Modo "Conjuntos"**: en vez de un diff línea por línea, muestra tres columnas — "sólo en A", "en ambos", "sólo en B" — tratando cada archivo como una lista de ítems en vez de una secuencia ordenada. Pensado para casos como comparar el "following" y "followers" exportados de Instagram: cada persona ocupa una cantidad distinta de líneas en cada archivo (uno tiene URL + fecha, el otro sólo fecha), así que un diff posicional nunca alinea nada. El toggle "Ignorar URLs/fechas/vacíos" de este modo descarta líneas en blanco, URLs y timestamps tipo `Jul 13, 2026 8:33 am` antes de comparar, dejando sólo el nombre de usuario como clave.
 - Copiar el contenido de un panel al otro, y guardar cada panel de vuelta a su archivo original (o "Guardar como" si no tiene uno).
+- Deshacer/rehacer (⌘Z / ⌘⇧Z) para ordenar y copiar, igual que para texto tipeado.
 - Recuerda los últimos dos archivos abiertos entre sesiones.
 - Aviso no bloqueante en archivos grandes (ver más abajo).
 
