@@ -50,6 +50,20 @@ final class SetDiffEngineTests: XCTestCase {
         XCTAssertEqual(result.onlyRight, ["soloMeSigue"])
     }
 
+    func testNoiseFilterRecognizesOtherDateFormatsToo() {
+        // Not tied to Instagram's specific "Jul 13, 2026 8:33 am" shape —
+        // uses macOS's system date detector, which understands plenty of
+        // other formats too.
+        var options = DiffOptions()
+        options.ignoreNoiseLines = true
+        let left = "alice\n2026-07-13\n07/13/2026 08:33"
+        let right = "alice\nbob"
+        let result = SetDiffEngine.compute(leftText: left, rightText: right, options: options)
+        XCTAssertEqual(result.both, ["alice"])
+        XCTAssertEqual(result.onlyRight, ["bob"])
+        XCTAssertTrue(result.onlyLeft.isEmpty, "date-shaped lines should be dropped as noise, got \(result.onlyLeft)")
+    }
+
     func testNoiseFilterCombinesWithIgnoreCase() {
         var options = DiffOptions()
         options.ignoreNoiseLines = true
