@@ -10,6 +10,14 @@ struct DiffOptions: Equatable {
     /// profile URLs, instead of every line showing as changed.
     var stripText: String = ""
 
+    /// For "Conjuntos" mode: drop blank lines, bare URLs, and Meta/Instagram-
+    /// style timestamps ("Jul 13, 2026 8:33 am") before comparing — needed
+    /// because a "following" export and a "followers" export list the same
+    /// person's entry with a different number of lines (one has a blank line
+    /// + profile URL, the other doesn't), so only the username line is ever
+    /// common ground between them.
+    var ignoreNoiseLines: Bool = false
+
     /// Files larger than this (in bytes) or with more lines than `largeFileLineThreshold`
     /// are still diffed at the line level, but word-level highlighting is skipped to keep
     /// the UI responsive.

@@ -11,6 +11,8 @@
 		11E793363184F216CCC2ED07 /* RecentFilesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31C4DEEB6483BE505612773 /* RecentFilesStore.swift */; };
 		340DE71411B0FA5154E8CEF6 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5674CA9DFF0CEC122DAC94 /* DiffEngine.swift */; };
 		3E67855CAB53BB3CAD8BB391 /* CompareViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877C02EDA9C504C5A1043DC2 /* CompareViewModel.swift */; };
+		61E4636959C33DE76F7D8441 /* SetDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE48CC4F13382993DADBD01 /* SetDiffView.swift */; };
+		698D951CCB9FD669F191B8FE /* SetDiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E613C11AF36A16E0E6A64655 /* SetDiffEngineTests.swift */; };
 		78EB0360E4BC5C1886C78185 /* WordDiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DBE83B76AF812E501CACBA /* WordDiffEngineTests.swift */; };
 		7F7757E33965BBBF9B8B7544 /* LineDiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DC0DBF29A3A26DC651C258 /* LineDiffEngine.swift */; };
 		96DD557A55E3F8C90778578F /* SideBySideDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77227D91BC881716B4365DD5 /* SideBySideDiffView.swift */; };
@@ -23,6 +25,7 @@
 		CAF4350F27F5D3F8D70B03E4 /* DiffModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE2DFAF72EED8FC04F07DC9E /* DiffModels.swift */; };
 		CED3B0B844EA4DE615C74EE5 /* DiffColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D99061F6ED5FC3B2E8BAFC /* DiffColors.swift */; };
 		CEECB8E2D57AC6A84A476956 /* DiffOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF1719AFE89C6DB59A52F94 /* DiffOptions.swift */; };
+		D76232560FE54B2D55EBB05E /* SetDiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11EE1CA7BC265E711C7156B /* SetDiffEngine.swift */; };
 		DB79B26C85ED679D0E17D4A3 /* FileLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E828F5086548D997F81CCFA9 /* FileLoader.swift */; };
 		DCB1C18E45189BC61A24C891 /* UnifiedDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED86ED61FB3BD36A3A9BA4C4 /* UnifiedDiffView.swift */; };
 		F4C194D55B222906092AD640 /* DiffTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760097BF1A09AAC828B902AA /* DiffTextView.swift */; };
@@ -42,6 +45,7 @@
 		08B0AA56F075FD1C666E2D54 /* FileCompareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCompareApp.swift; sourceTree = "<group>"; };
 		0D8BDD59CFC91923CC76CD99 /* WordDiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiffEngine.swift; sourceTree = "<group>"; };
 		1B26F3926A28DA77BAA60085 /* FileCompareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FileCompareTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6EE48CC4F13382993DADBD01 /* SetDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetDiffView.swift; sourceTree = "<group>"; };
 		760097BF1A09AAC828B902AA /* DiffTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffTextView.swift; sourceTree = "<group>"; };
 		77227D91BC881716B4365DD5 /* SideBySideDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideBySideDiffView.swift; sourceTree = "<group>"; };
 		877C02EDA9C504C5A1043DC2 /* CompareViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareViewModel.swift; sourceTree = "<group>"; };
@@ -52,9 +56,11 @@
 		9CF1719AFE89C6DB59A52F94 /* DiffOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffOptions.swift; sourceTree = "<group>"; };
 		A874759AA935407395385FD7 /* CodeTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeTextView.swift; sourceTree = "<group>"; };
 		A8DBE83B76AF812E501CACBA /* WordDiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiffEngineTests.swift; sourceTree = "<group>"; };
+		B11EE1CA7BC265E711C7156B /* SetDiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetDiffEngine.swift; sourceTree = "<group>"; };
 		B5D99061F6ED5FC3B2E8BAFC /* DiffColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffColors.swift; sourceTree = "<group>"; };
 		CB5674CA9DFF0CEC122DAC94 /* DiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngine.swift; sourceTree = "<group>"; };
 		E31C4DEEB6483BE505612773 /* RecentFilesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFilesStore.swift; sourceTree = "<group>"; };
+		E613C11AF36A16E0E6A64655 /* SetDiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetDiffEngineTests.swift; sourceTree = "<group>"; };
 		E828F5086548D997F81CCFA9 /* FileLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLoader.swift; sourceTree = "<group>"; };
 		ED86ED61FB3BD36A3A9BA4C4 /* UnifiedDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDiffView.swift; sourceTree = "<group>"; };
 		EE2DFAF72EED8FC04F07DC9E /* DiffModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffModels.swift; sourceTree = "<group>"; };
@@ -101,6 +107,7 @@
 				8DCA65E6DE4FFF5440AEE8FE /* ContentView.swift */,
 				760097BF1A09AAC828B902AA /* DiffTextView.swift */,
 				92561AA43F88DB2D45483330 /* ScrollSyncCoordinator.swift */,
+				6EE48CC4F13382993DADBD01 /* SetDiffView.swift */,
 				77227D91BC881716B4365DD5 /* SideBySideDiffView.swift */,
 				ED86ED61FB3BD36A3A9BA4C4 /* UnifiedDiffView.swift */,
 			);
@@ -122,6 +129,7 @@
 				CB5674CA9DFF0CEC122DAC94 /* DiffEngine.swift */,
 				9CF1719AFE89C6DB59A52F94 /* DiffOptions.swift */,
 				93DC0DBF29A3A26DC651C258 /* LineDiffEngine.swift */,
+				B11EE1CA7BC265E711C7156B /* SetDiffEngine.swift */,
 				0D8BDD59CFC91923CC76CD99 /* WordDiffEngine.swift */,
 			);
 			path = Diff;
@@ -131,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				966B1284CE616BA9CB7C4B69 /* LineDiffEngineTests.swift */,
+				E613C11AF36A16E0E6A64655 /* SetDiffEngineTests.swift */,
 				A8DBE83B76AF812E501CACBA /* WordDiffEngineTests.swift */,
 			);
 			path = FileCompareTests;
@@ -261,6 +270,8 @@
 				7F7757E33965BBBF9B8B7544 /* LineDiffEngine.swift in Sources */,
 				11E793363184F216CCC2ED07 /* RecentFilesStore.swift in Sources */,
 				C71A231A16F3FA9A26303C67 /* ScrollSyncCoordinator.swift in Sources */,
+				D76232560FE54B2D55EBB05E /* SetDiffEngine.swift in Sources */,
+				61E4636959C33DE76F7D8441 /* SetDiffView.swift in Sources */,
 				96DD557A55E3F8C90778578F /* SideBySideDiffView.swift in Sources */,
 				DCB1C18E45189BC61A24C891 /* UnifiedDiffView.swift in Sources */,
 				A19E3C6E315D461D1E3F7A9D /* WordDiffEngine.swift in Sources */,
@@ -272,6 +283,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFE83C784810AB07532A27B2 /* LineDiffEngineTests.swift in Sources */,
+				698D951CCB9FD669F191B8FE /* SetDiffEngineTests.swift in Sources */,
 				78EB0360E4BC5C1886C78185 /* WordDiffEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

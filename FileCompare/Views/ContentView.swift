@@ -3,6 +3,7 @@ import SwiftUI
 enum DiffViewMode: String, CaseIterable, Identifiable {
     case sideBySide = "Lado a lado"
     case unified = "Unificado"
+    case sets = "Conjuntos"
     var id: String { rawValue }
 }
 
@@ -25,6 +26,12 @@ struct ContentView: View {
                     SideBySideDiffView(viewModel: viewModel)
                 case .unified:
                     UnifiedDiffView(diffResult: viewModel.diffResult, revision: viewModel.diffRevision)
+                case .sets:
+                    SetDiffView(
+                        result: SetDiffEngine.compute(leftText: viewModel.leftText, rightText: viewModel.rightText, options: viewModel.options),
+                        leftTitle: viewModel.leftURL?.lastPathComponent ?? "Izquierda",
+                        rightTitle: viewModel.rightURL?.lastPathComponent ?? "Derecha"
+                    )
                 }
             }
         }
@@ -36,7 +43,7 @@ struct ContentView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 200)
+                .frame(width: 280)
 
                 Toggle("Ignorar espacios", isOn: Binding(
                     get: { viewModel.options.ignoreWhitespace },
@@ -46,6 +53,14 @@ struct ContentView: View {
                     get: { viewModel.options.ignoreCase },
                     set: { _ in viewModel.toggleIgnoreCase() }
                 ))
+
+                if mode == .sets {
+                    Toggle("Ignorar URLs/fechas/vacíos", isOn: Binding(
+                        get: { viewModel.options.ignoreNoiseLines },
+                        set: { _ in viewModel.toggleIgnoreNoiseLines() }
+                    ))
+                    .help("Para exportaciones tipo Instagram donde cada entrada tiene distinta cantidad de líneas (URL, fecha) — sólo importa el nombre de usuario.")
+                }
 
                 TextField("Quitar texto antes de comparar…", text: Binding(
                     get: { viewModel.options.stripText },
