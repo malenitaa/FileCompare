@@ -92,6 +92,9 @@ private struct ComparableLine: Equatable {
 
     init(line: String, options: DiffOptions) {
         var k = line
+        if !options.stripText.isEmpty {
+            k = k.replacingOccurrences(of: options.stripText, with: "")
+        }
         if options.ignoreCase {
             k = k.lowercased()
         }

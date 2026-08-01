@@ -44,6 +44,19 @@ final class LineDiffEngineTests: XCTestCase {
         XCTAssertEqual(result.summary, DiffSummary())
     }
 
+    func testStripTextOption() {
+        let left = "instagram.com/malena\ninstagram.com/juan\ninstagram.com/carla"
+        let right = "malena\ncarla"
+        var options = DiffOptions()
+        options.stripText = "instagram.com/"
+        let result = DiffEngine.compute(leftText: left, rightText: right, options: options)
+        // "malena" and "carla" match on both sides once stripped; "juan" only
+        // appears on the left, so it's the one real difference.
+        XCTAssertEqual(result.summary.removed, 1)
+        XCTAssertEqual(result.summary.added, 0)
+        XCTAssertEqual(result.summary.modified, 0)
+    }
+
     func testIgnoreCaseOption() {
         let left = "Hello World"
         let right = "hello world"

@@ -6,6 +6,6 @@ struct FileCompareApp: App {
         WindowGroup {
             ContentView()
         }
-        .defaultSize(width: 1100, height: 650)
+        .defaultSize(width: 1300, height: 700)
     }
 }
