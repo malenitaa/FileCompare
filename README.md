@@ -37,7 +37,8 @@ Por encima de 50 MB se muestra además un aviso de que la app puede volverse len
 ## Arquitectura
 
 - **SwiftUI** para la estructura general (toolbar, toggles, layout).
-- **AppKit** (`NSTextView` + un `NSRulerView` propio para los números de línea) para cada panel de texto, envuelto en un `NSViewRepresentable`. Esto es necesario para tener performance real con archivos largos y poder pintar los colores del diff como atributos de texto sin pelear con las limitaciones de `TextEditor`/`Text` de SwiftUI.
+- **AppKit** (`NSTextView`) para cada panel de texto, envuelto en un `NSViewRepresentable`. Esto es necesario para tener performance real con archivos largos y poder pintar los colores del diff como atributos de texto sin pelear con las limitaciones de `TextEditor`/`Text` de SwiftUI.
+- Los números de línea se muestran con un segundo `NSTextView` de solo lectura (una "columna" de números) sincronizado por scroll con el panel de código, en vez de un `NSRulerView` custom: en esta versión de AppKit, overridear `NSRulerView.drawHashMarksAndLabels` con cualquier lógica no trivial corrompe el renderizado del `NSTextView` vecino (deja de pintar glyphs aunque el layout sea válido). El wrap de línea está desactivado en los paneles de código (scrollean horizontalmente) para que cada línea lógica sea siempre una fila, manteniendo la columna de números perfectamente alineada.
 - Sin sandbox de macOS ni telemetría: la app es 100% local, no hace ninguna llamada de red.
 - Deployment target: macOS 13.0. Swift language mode 5.
 
