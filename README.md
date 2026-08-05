@@ -1,8 +1,13 @@
 # FileCompare
 
-App nativa de macOS para comparar dos archivos de texto o código lado a
-lado — una versión simple de las herramientas de "compare" de BBEdit o
-Notepad++. Sin Electron, sin dependencias externas, 100% local.
+[![Descargar última versión](https://img.shields.io/github/v/release/malenitaa/FileCompare?label=descargar&color=6b46c1)](https://github.com/malenitaa/FileCompare/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![macOS](https://img.shields.io/badge/platform-macOS-lightgrey)](#)
+
+**FileCompare** es una app nativa de **macOS** para **comparar archivos de
+texto o código lado a lado** (diff visual) — una versión simple de las
+herramientas de "compare"/diff de BBEdit o Notepad++. Escrita en
+**Swift/SwiftUI**, sin Electron, sin dependencias externas, 100% local.
 
 - Dos paneles lado a lado (editables) o una vista unificada estilo `git diff`.
 - Resaltado línea por línea y también a nivel de palabra dentro de cada línea.
