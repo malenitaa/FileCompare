@@ -32,3 +32,6 @@ Pods/
 
 # xcodegen (project.xcodeproj is generated but committed for "clone & build";
 # regenerate with `xcodegen generate` after editing project.yml)
+
+# Archivos privados locales (nunca se suben al repo)
+README.privado.md
