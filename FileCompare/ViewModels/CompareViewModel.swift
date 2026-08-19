@@ -20,16 +20,48 @@ final class CompareViewModel: ObservableObject {
     /// (which looks like nothing happened on a second click).
     @Published private(set) var isSortAscending = true
 
+    /// One shared manager for both panels (handed to each `NSTextView` via
+    /// `NSTextViewDelegate.undoManager(for:)`, see DiffTextView.Coordinator),
+    /// instead of letting each `NSTextView` keep its own private undo stack.
+    /// Operations like "Ordenar", which edit both panels in one call, need a
+    /// single ⌘Z to undo both sides atomically — two independent per-panel
+    /// managers left the panel that didn't have focus stuck in its new state.
+    let sharedUndoManager = UndoManager()
+
     private var debounceTask: Task<Void, Never>?
     private var computeTask: Task<Void, Never>?
+    /// The actual background compute, tracked separately from `computeTask`
+    /// (the thin wrapper that awaits it) so it can be cancelled directly —
+    /// see the comment in `recompute()`.
+    private var workTask: Task<DiffResult?, Never>?
     private weak var leftTextView: NSTextView?
     private weak var rightTextView: NSTextView?
 
     init() {
+        // Reads the last-opened files off the main actor: `loadFile(_:into:)`
+        // (used by the open panel / drag-and-drop, where a brief synchronous
+        // read alongside an already-modal or already-in-flight user action is
+        // unnoticeable) does its disk read inline. Doing that inline here too
+        // would block window creation itself on disk I/O whenever the last
+        // panel remembered a large file.
         let recent = RecentFilesStore.load()
-        if let left = recent.left { loadFile(left, into: .left) }
-        if let right = recent.right { loadFile(right, into: .right) }
-        scheduleDiff(debounce: false)
+        Task { [weak self] in
+            if let left = recent.left { await self?.loadFileOffMainActor(left, into: .left) }
+            guard let self, !Task.isCancelled else { return }
+            if let right = recent.right { await self.loadFileOffMainActor(right, into: .right) }
+            guard !Task.isCancelled else { return }
+            self.scheduleDiff(debounce: false)
+        }
+    }
+
+    private func loadFileOffMainActor(_ url: URL, into side: PanelSide) async {
+        if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
+            errorMessage = "El archivo supera 50MB; la app puede volverse lenta."
+        }
+        let result = await Task.detached(priority: .userInitiated) { () -> Result<String, Error> in
+            Result { try FileLoader.readText(from: url) }
+        }.value
+        applyLoadResult(result, url: url, side: side)
     }
 
     var leftLineCount: Int { LineDiffEngine.splitLines(leftText).count }
@@ -113,37 +145,20 @@ final class CompareViewModel: ObservableObject {
     }
 
     /// Registers ⌘Z support for a programmatic change to one or both panels,
-    /// on each affected panel's own text-view undo manager (the same one that
-    /// already undoes regular typing there).
+    /// as a single atomic entry on `sharedUndoManager` — one undo restores
+    /// both `leftText` and `rightText` together, so "Ordenar" (which sorts
+    /// both panels in one call) can't be half-undone.
     private func registerUndo(previousLeft: String, previousRight: String, actionName: String) {
-        if previousLeft != leftText {
-            registerLeftUndo(restoringTo: previousLeft, actionName: actionName)
-        }
-        if previousRight != rightText {
-            registerRightUndo(restoringTo: previousRight, actionName: actionName)
-        }
-    }
-
-    private func registerLeftUndo(restoringTo value: String, actionName: String) {
-        guard let undoManager = leftTextView?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
-            let redoValue = target.leftText
-            target.leftText = value
+        guard previousLeft != leftText || previousRight != rightText else { return }
+        sharedUndoManager.registerUndo(withTarget: self) { target in
+            let redoLeft = target.leftText
+            let redoRight = target.rightText
+            target.leftText = previousLeft
+            target.rightText = previousRight
             target.scheduleDiff(debounce: false)
-            target.registerLeftUndo(restoringTo: redoValue, actionName: actionName)
+            target.registerUndo(previousLeft: redoLeft, previousRight: redoRight, actionName: actionName)
         }
-        undoManager.setActionName(actionName)
-    }
-
-    private func registerRightUndo(restoringTo value: String, actionName: String) {
-        guard let undoManager = rightTextView?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
-            let redoValue = target.rightText
-            target.rightText = value
-            target.scheduleDiff(debounce: false)
-            target.registerRightUndo(restoringTo: redoValue, actionName: actionName)
-        }
-        undoManager.setActionName(actionName)
+        sharedUndoManager.setActionName(actionName)
     }
 
     func scheduleDiff(debounce: Bool) {
@@ -160,17 +175,26 @@ final class CompareViewModel: ObservableObject {
     }
 
     private func recompute() async {
+        // Cancelling `computeTask` alone used to leave the actual work running:
+        // it only cancelled the thin wrapper awaiting `workTask.value`, never
+        // `workTask` itself — so toggling an option twice in a row on a large
+        // file queued up multiple full-cost background computes that all ran
+        // to completion, wasting CPU on results that were about to be thrown
+        // away anyway. Cancelling `workTask` directly lets `DiffEngine.compute`'s
+        // own `Task.checkCancellation()` checks bail out early instead.
+        workTask?.cancel()
         computeTask?.cancel()
         isComputing = true
         let left = leftText
         let right = rightText
         let opts = options
 
-        let workTask = Task.detached(priority: .userInitiated) { () -> DiffResult in
-            DiffEngine.compute(leftText: left, rightText: right, options: opts)
+        let newWorkTask = Task.detached(priority: .userInitiated) { () -> DiffResult? in
+            try? DiffEngine.compute(leftText: left, rightText: right, options: opts)
         }
+        workTask = newWorkTask
         let applyTask = Task { [weak self] in
-            let result = await workTask.value
+            guard let result = await newWorkTask.value else { return }
             guard let self, !Task.isCancelled else { return }
             self.diffResult = result
             self.diffRevision += 1
@@ -198,10 +222,16 @@ final class CompareViewModel: ObservableObject {
         if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
             errorMessage = "El archivo supera 50MB; la app puede volverse lenta."
         }
+        let result = Result { try FileLoader.readText(from: url) }
+        applyLoadResult(result, url: url, side: side)
+    }
+
+    private func applyLoadResult(_ result: Result<String, Error>, url: URL, side: PanelSide) {
         let text: String
-        do {
-            text = try FileLoader.readText(from: url)
-        } catch {
+        switch result {
+        case .success(let value):
+            text = value
+        case .failure(let error):
             errorMessage = error.localizedDescription
             return
         }

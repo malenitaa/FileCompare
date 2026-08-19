@@ -19,6 +19,17 @@ struct SideBySideDiffView: View {
                 scrollLine: $viewModel.scrollRequestRightLine
             )
         }
+        // Keeps the cross-panel scroll sync mapping current with the latest
+        // diff — see ScrollSyncCoordinator's line-based mapping.
+        .onChange(of: viewModel.diffRevision) { _ in updateSyncAnchors() }
+        .onAppear { updateSyncAnchors() }
+    }
+
+    private func updateSyncAnchors() {
+        syncCoordinator.anchors = viewModel.diffResult.lines.compactMap { line in
+            guard let left = line.leftNumber, let right = line.rightNumber else { return nil }
+            return (left: left, right: right)
+        }
     }
 
     @ViewBuilder
@@ -54,7 +65,8 @@ struct SideBySideDiffView: View {
                     syncCoordinator: syncCoordinator,
                     onFileDropped: { url in viewModel.handleDrop(url: url, side: side) },
                     onTextViewReady: { textView in viewModel.registerTextView(textView, for: side) },
-                    scrollRequestLine: scrollLine
+                    scrollRequestLine: scrollLine,
+                    sharedUndoManager: viewModel.sharedUndoManager
                 )
                 .onChange(of: text.wrappedValue) { _ in
                     viewModel.textDidChange(side: side)

@@ -2,54 +2,54 @@ import XCTest
 @testable import FileCompare
 
 final class LineDiffEngineTests: XCTestCase {
-    func testIdenticalFilesProduceNoChanges() {
+    func testIdenticalFilesProduceNoChanges() throws {
         let text = "a\nb\nc"
-        let result = DiffEngine.compute(leftText: text, rightText: text, options: DiffOptions())
+        let result = try DiffEngine.compute(leftText: text, rightText: text, options: DiffOptions())
         XCTAssertEqual(result.summary, DiffSummary())
         XCTAssertTrue(result.lines.allSatisfy { $0.kind == .unchanged })
     }
 
-    func testPureAddition() {
+    func testPureAddition() throws {
         let left = "a\nb"
         let right = "a\nb\nc"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
         XCTAssertEqual(result.summary.added, 1)
         XCTAssertEqual(result.summary.removed, 0)
         XCTAssertEqual(result.summary.modified, 0)
     }
 
-    func testPureRemoval() {
+    func testPureRemoval() throws {
         let left = "a\nb\nc"
         let right = "a\nc"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
         XCTAssertEqual(result.summary.removed, 1)
         XCTAssertEqual(result.summary.added, 0)
     }
 
-    func testReplacementIsMarkedModified() {
+    func testReplacementIsMarkedModified() throws {
         let left = "a\nhello world\nc"
         let right = "a\nhello there\nc"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
         XCTAssertEqual(result.summary.modified, 1)
         XCTAssertEqual(result.summary.added, 0)
         XCTAssertEqual(result.summary.removed, 0)
     }
 
-    func testIgnoreWhitespaceOption() {
+    func testIgnoreWhitespaceOption() throws {
         let left = "hello   world"
         let right = "hello world"
         var options = DiffOptions()
         options.ignoreWhitespace = true
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: options)
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: options)
         XCTAssertEqual(result.summary, DiffSummary())
     }
 
-    func testStripTextOption() {
+    func testStripTextOption() throws {
         let left = "instagram.com/malena\ninstagram.com/juan\ninstagram.com/carla"
         let right = "malena\ncarla"
         var options = DiffOptions()
         options.stripText = "instagram.com/"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: options)
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: options)
         // "malena" and "carla" match on both sides once stripped; "juan" only
         // appears on the left, so it's the one real difference.
         XCTAssertEqual(result.summary.removed, 1)
@@ -57,28 +57,45 @@ final class LineDiffEngineTests: XCTestCase {
         XCTAssertEqual(result.summary.modified, 0)
     }
 
-    func testIgnoreCaseOption() {
+    func testIgnoreCaseOption() throws {
         let left = "Hello World"
         let right = "hello world"
         var options = DiffOptions()
         options.ignoreCase = true
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: options)
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: options)
         XCTAssertEqual(result.summary, DiffSummary())
     }
 
-    func testChangeGroupsMergeContiguousChanges() {
+    func testChangeGroupsMergeContiguousChanges() throws {
         let left = "a\nb\nc\nd\ne"
         let right = "a\nX\nY\nd\ne"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
         XCTAssertEqual(result.changeGroups.count, 1)
     }
 
-    func testLargeFileDisablesWordDiff() {
+    func testSplitLinesHandlesPureCRLF() {
+        XCTAssertEqual(LineDiffEngine.splitLines("a\r\nb\r\nc"), ["a", "b", "c"])
+    }
+
+    func testSplitLinesHandlesMixedLineEndings() {
+        XCTAssertEqual(LineDiffEngine.splitLines("a\r\nb\nc\rd"), ["a", "b", "c", "d"])
+    }
+
+    func testCRLFFileDiffsLineByLineNotAsOneBlob() throws {
+        let left = "a\r\nb\r\nc"
+        let right = "a\r\nX\r\nc"
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: DiffOptions())
+        XCTAssertEqual(result.summary.modified, 1)
+        XCTAssertEqual(result.summary.added, 0)
+        XCTAssertEqual(result.summary.removed, 0)
+    }
+
+    func testLargeFileDisablesWordDiff() throws {
         var options = DiffOptions()
         options.largeFileLineThreshold = 2
         let left = "a\nb\nc"
         let right = "a\nx\nc"
-        let result = DiffEngine.compute(leftText: left, rightText: right, options: options)
+        let result = try DiffEngine.compute(leftText: left, rightText: right, options: options)
         XCTAssertTrue(result.wordDiffDisabled)
         XCTAssertTrue(result.lines.allSatisfy { $0.leftSegments == nil && $0.rightSegments == nil })
     }

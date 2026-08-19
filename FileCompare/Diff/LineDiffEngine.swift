@@ -78,12 +78,37 @@ enum LineDiffEngine {
         return (lines, summary)
     }
 
-    /// Splits raw file text into lines for comparison, tolerating both "\n" and "\r\n".
+    /// Splits raw file text into lines for comparison, tolerating "\n", "\r\n",
+    /// and old-Mac "\r"-only line endings. Operates on `unicodeScalars` rather
+    /// than `Character`s: Swift's grapheme clustering treats "\r\n" as a
+    /// single `Character`, so a `String.split(separator: "\n")` never finds a
+    /// break inside a pure-CRLF file and the whole file collapses into one
+    /// "line".
     static func splitLines(_ text: String) -> [String] {
         if text.isEmpty { return [] }
-        return text
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { $0.hasSuffix("\r") ? String($0.dropLast()) : String($0) }
+        var lines: [String] = []
+        var current = String.UnicodeScalarView()
+        var previousWasCR = false
+        for scalar in text.unicodeScalars {
+            if scalar == "\n" {
+                if previousWasCR {
+                    // The "\n" half of a "\r\n" pair whose "\r" already closed this line.
+                    previousWasCR = false
+                    continue
+                }
+                lines.append(String(current))
+                current = String.UnicodeScalarView()
+            } else if scalar == "\r" {
+                lines.append(String(current))
+                current = String.UnicodeScalarView()
+                previousWasCR = true
+            } else {
+                previousWasCR = false
+                current.append(scalar)
+            }
+        }
+        lines.append(String(current))
+        return lines
     }
 }
 

@@ -103,6 +103,14 @@ private struct TokenKey: Equatable {
     let key: String
 
     init(token: String, options: DiffOptions) {
-        key = options.ignoreCase ? token.lowercased() : token
+        var k = options.ignoreCase ? token.lowercased() : token
+        // Match ComparableLine's whitespace handling: when the line-level pass
+        // ignores whitespace, every whitespace run must compare equal here too,
+        // or the word highlight ends up marking spacing changes the line diff
+        // was told to disregard.
+        if options.ignoreWhitespace, !k.isEmpty, k.allSatisfy({ $0.isWhitespace }) {
+            k = " "
+        }
+        key = k
     }
 }

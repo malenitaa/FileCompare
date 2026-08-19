@@ -15,4 +15,16 @@ final class WordDiffEngineTests: XCTestCase {
         XCTAssertTrue(right.contains { $0.text == "there" && $0.changed })
         XCTAssertFalse(left.contains { $0.text.contains("hello") && $0.changed })
     }
+
+    func testWordDiffRespectsIgnoreWhitespace() {
+        var options = DiffOptions()
+        options.ignoreWhitespace = true
+        let (left, right) = WordDiffEngine.diffSegments(left: "foo   bar", right: "foo baz", options: options)
+        // Only "bar"/"baz" changed; the differing amount of whitespace before
+        // them should NOT be marked changed when ignoreWhitespace is on.
+        XCTAssertTrue(left.contains { $0.text == "bar" && $0.changed })
+        XCTAssertTrue(right.contains { $0.text == "baz" && $0.changed })
+        XCTAssertFalse(left.contains { $0.text == "   " && $0.changed })
+        XCTAssertFalse(right.contains { $0.text == " " && $0.changed })
+    }
 }

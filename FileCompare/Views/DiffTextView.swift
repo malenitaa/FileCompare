@@ -24,6 +24,9 @@ struct DiffTextView: NSViewRepresentable {
     var onFileDropped: (URL) -> Void
     var onTextViewReady: (NSTextView) -> Void = { _ in }
     @Binding var scrollRequestLine: Int?
+    /// Shared across both panels so a single ⌘Z can undo an operation (like
+    /// "Ordenar") that edited both at once — see CompareViewModel.sharedUndoManager.
+    var sharedUndoManager: UndoManager
 
     private let gutterWidth: CGFloat = 44
 
@@ -225,6 +228,10 @@ struct DiffTextView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+        }
+
+        func undoManager(for view: NSTextView) -> UndoManager? {
+            parent.sharedUndoManager
         }
     }
 }

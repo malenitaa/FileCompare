@@ -49,7 +49,8 @@ enum SetDiffEngine {
     }
 
     private static func isURL(_ line: String) -> Bool {
-        line.hasPrefix("http://") || line.hasPrefix("https://")
+        let lowercased = line.lowercased()
+        return lowercased.hasPrefix("http://") || lowercased.hasPrefix("https://")
     }
 
     /// Apple's own date/time recognizer (what Mail, Messages, and Calendar
