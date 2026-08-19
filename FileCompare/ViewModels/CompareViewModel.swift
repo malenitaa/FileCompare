@@ -1,6 +1,23 @@
 import Foundation
 import AppKit
 
+/// User-visible errors as cases (not strings), so the banner text can follow
+/// the in-app language selector instead of freezing whatever language was
+/// active when the error happened.
+enum CompareError: Equatable {
+    case fileOver50MB
+    case notText
+    case system(String)
+
+    func message(_ t: Strings) -> String {
+        switch self {
+        case .fileOver50MB: return t.fileOver50MB
+        case .notText: return t.notTextError
+        case .system(let description): return description
+        }
+    }
+}
+
 @MainActor
 final class CompareViewModel: ObservableObject {
     @Published var leftText: String = ""
@@ -11,7 +28,7 @@ final class CompareViewModel: ObservableObject {
     @Published private(set) var diffResult: DiffResult = .empty
     @Published private(set) var diffRevision: Int = 0
     @Published private(set) var isComputing = false
-    @Published var errorMessage: String?
+    @Published var activeError: CompareError?
     @Published var currentChangeIndex: Int = -1
     @Published var scrollRequestLeftLine: Int?
     @Published var scrollRequestRightLine: Int?
@@ -56,7 +73,7 @@ final class CompareViewModel: ObservableObject {
 
     private func loadFileOffMainActor(_ url: URL, into side: PanelSide) async {
         if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
-            errorMessage = "El archivo supera 50MB; la app puede volverse lenta."
+            activeError = .fileOver50MB
         }
         let result = await Task.detached(priority: .userInitiated) { () -> Result<String, Error> in
             Result { try FileLoader.readText(from: url) }
@@ -117,7 +134,7 @@ final class CompareViewModel: ObservableObject {
         rightText = Self.sortedText(rightText, ascending: ascending)
         isSortAscending.toggle()
         scheduleDiff(debounce: false)
-        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: ascending ? "Ordenar A-Z" : "Ordenar Z-A")
+        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: ascending ? L10n.shared.t.undoSortAsc : L10n.shared.t.undoSortDesc)
         focus(.left)
     }
 
@@ -220,7 +237,7 @@ final class CompareViewModel: ObservableObject {
 
     func loadFile(_ url: URL, into side: PanelSide) {
         if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
-            errorMessage = "El archivo supera 50MB; la app puede volverse lenta."
+            activeError = .fileOver50MB
         }
         let result = Result { try FileLoader.readText(from: url) }
         applyLoadResult(result, url: url, side: side)
@@ -232,7 +249,7 @@ final class CompareViewModel: ObservableObject {
         case .success(let value):
             text = value
         case .failure(let error):
-            errorMessage = error.localizedDescription
+            activeError = (error as? FileLoaderError) == .notText ? .notText : .system(error.localizedDescription)
             return
         }
         switch side {
@@ -280,7 +297,7 @@ final class CompareViewModel: ObservableObject {
         do {
             try FileLoader.write(text, to: url)
         } catch {
-            errorMessage = error.localizedDescription
+            activeError = .system(error.localizedDescription)
         }
     }
 
@@ -292,7 +309,7 @@ final class CompareViewModel: ObservableObject {
         case .right: leftText = rightText
         }
         scheduleDiff(debounce: false)
-        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: "Copiar")
+        registerUndo(previousLeft: oldLeft, previousRight: oldRight, actionName: L10n.shared.t.undoCopy)
         focus(side == .left ? .right : .left)
     }
 

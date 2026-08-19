@@ -11,6 +11,7 @@
 		11E793363184F216CCC2ED07 /* RecentFilesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31C4DEEB6483BE505612773 /* RecentFilesStore.swift */; };
 		27424ED73098EC9F693D2593 /* ScrollSyncCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B99716ED4F75802A6B87A8E /* ScrollSyncCoordinatorTests.swift */; };
 		340DE71411B0FA5154E8CEF6 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5674CA9DFF0CEC122DAC94 /* DiffEngine.swift */; };
+		3AAAE399F3407E691ADF4332 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBD9495C204B1D809A6C2C4C /* L10n.swift */; };
 		3E67855CAB53BB3CAD8BB391 /* CompareViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877C02EDA9C504C5A1043DC2 /* CompareViewModel.swift */; };
 		53206C3D102B014B3FA6385B /* FileLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A60714F3EE34EBE88D45F8 /* FileLoaderTests.swift */; };
 		61E4636959C33DE76F7D8441 /* SetDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE48CC4F13382993DADBD01 /* SetDiffView.swift */; };
@@ -66,6 +67,7 @@
 		E31C4DEEB6483BE505612773 /* RecentFilesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentFilesStore.swift; sourceTree = "<group>"; };
 		E613C11AF36A16E0E6A64655 /* SetDiffEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetDiffEngineTests.swift; sourceTree = "<group>"; };
 		E828F5086548D997F81CCFA9 /* FileLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileLoader.swift; sourceTree = "<group>"; };
+		EBD9495C204B1D809A6C2C4C /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		ED86ED61FB3BD36A3A9BA4C4 /* UnifiedDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedDiffView.swift; sourceTree = "<group>"; };
 		EE2DFAF72EED8FC04F07DC9E /* DiffModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffModels.swift; sourceTree = "<group>"; };
 		F57F3DE8737BF6397DC424DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 			children = (
 				B5D99061F6ED5FC3B2E8BAFC /* DiffColors.swift */,
 				E828F5086548D997F81CCFA9 /* FileLoader.swift */,
+				EBD9495C204B1D809A6C2C4C /* L10n.swift */,
 				E31C4DEEB6483BE505612773 /* RecentFilesStore.swift */,
 			);
 			path = Support;
@@ -273,6 +276,7 @@
 				F4C194D55B222906092AD640 /* DiffTextView.swift in Sources */,
 				C36551F58ED7F75CCD442FB4 /* FileCompareApp.swift in Sources */,
 				DB79B26C85ED679D0E17D4A3 /* FileLoader.swift in Sources */,
+				3AAAE399F3407E691ADF4332 /* L10n.swift in Sources */,
 				7F7757E33965BBBF9B8B7544 /* LineDiffEngine.swift in Sources */,
 				11E793363184F216CCC2ED07 /* RecentFilesStore.swift in Sources */,
 				C71A231A16F3FA9A26303C67 /* ScrollSyncCoordinator.swift in Sources */,

@@ -8,14 +8,15 @@ struct SetDiffView: View {
     let result: SetDiffResult
     let leftTitle: String
     let rightTitle: String
+    var t: Strings
 
     var body: some View {
         HStack(spacing: 0) {
-            column(title: "\(leftTitle) — Solo acá", items: result.onlyLeft, color: .blue)
+            column(title: "\(leftTitle) — \(t.onlyHereSuffix)", items: result.onlyLeft, color: .blue)
             Divider()
-            column(title: "En ambos", items: result.both, color: .purple)
+            column(title: t.inBoth, items: result.both, color: .purple)
             Divider()
-            column(title: "\(rightTitle) — Solo acá", items: result.onlyRight, color: .red)
+            column(title: "\(rightTitle) — \(t.onlyHereSuffix)", items: result.onlyRight, color: .red)
         }
     }
 
@@ -37,7 +38,7 @@ struct SetDiffView: View {
                     Image(systemName: "doc.on.doc")
                 }
                 .buttonStyle(.borderless)
-                .help("Copiar lista")
+                .help(t.copyListHelp)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
@@ -47,7 +48,7 @@ struct SetDiffView: View {
 
             if items.isEmpty {
                 Spacer()
-                Text("Vacío")
+                Text(t.empty)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()

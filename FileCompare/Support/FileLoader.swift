@@ -1,14 +1,9 @@
 import Foundation
 
-enum FileLoaderError: LocalizedError {
+// Rendered by the UI via CompareError/Strings so the message follows the
+// in-app language selector — no LocalizedError text hardcoded here.
+enum FileLoaderError: Error, Equatable {
     case notText
-
-    var errorDescription: String? {
-        switch self {
-        case .notText:
-            return "El archivo no parece ser texto plano (encoding no reconocido)."
-        }
-    }
 }
 
 enum FileLoader {

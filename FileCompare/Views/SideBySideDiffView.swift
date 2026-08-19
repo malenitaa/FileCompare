@@ -2,19 +2,20 @@ import SwiftUI
 
 struct SideBySideDiffView: View {
     @ObservedObject var viewModel: CompareViewModel
+    var t: Strings
     @State private var syncCoordinator = ScrollSyncCoordinator()
 
     var body: some View {
         HSplitView {
             panel(
                 side: .left,
-                title: viewModel.leftURL?.lastPathComponent ?? "Panel izquierdo",
+                title: viewModel.leftURL?.lastPathComponent ?? t.leftPanel,
                 text: $viewModel.leftText,
                 scrollLine: $viewModel.scrollRequestLeftLine
             )
             panel(
                 side: .right,
-                title: viewModel.rightURL?.lastPathComponent ?? "Panel derecho",
+                title: viewModel.rightURL?.lastPathComponent ?? t.rightPanel,
                 text: $viewModel.rightText,
                 scrollLine: $viewModel.scrollRequestRightLine
             )
@@ -47,7 +48,7 @@ struct SideBySideDiffView: View {
                     Image(systemName: "folder")
                 }
                 .buttonStyle(.borderless)
-                .help("Abrir archivo…")
+                .help(t.openFileHelp)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -76,7 +77,7 @@ struct SideBySideDiffView: View {
                     VStack(spacing: 6) {
                         Image(systemName: "doc.text")
                             .font(.largeTitle)
-                        Text("Arrastrá un archivo, usá el botón de carpeta o pegá texto acá")
+                        Text(t.dropHint)
                             .font(.caption)
                             .multilineTextAlignment(.center)
                     }
