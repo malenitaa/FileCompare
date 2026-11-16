@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: |
+          xcodebuild -project FileCompare.xcodeproj -scheme FileCompare \
+            -destination 'platform=macOS' test
