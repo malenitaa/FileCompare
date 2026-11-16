@@ -6,6 +6,8 @@ enum FileLoaderError: Error, Equatable {
     case notText
     /// The text has characters the file's original encoding can't hold.
     case notRepresentable
+    /// Over `FileLoader.maxFileSize`.
+    case tooLarge
 }
 
 /// How a file's bytes were decoded, so saving can write them back the same way.
@@ -26,9 +28,17 @@ struct DecodedText: Equatable {
 enum FileLoader {
     private static let utf8BOM: [UInt8] = [0xEF, 0xBB, 0xBF]
 
+    /// Hard cap: past this, reading the file, decoding it, splitting it into
+    /// lines and handing it to the text views can exhaust memory. Files over
+    /// 50MB already get a "may be slow" warning; this one refuses to open.
+    static let maxFileSize = 100 * 1024 * 1024
+
     /// Tries UTF-16 (BOM or NUL pattern), then UTF-8, then falls back to a
     /// handful of common single-byte encodings.
     static func readText(from url: URL) throws -> DecodedText {
+        if let size = fileSize(at: url), size > maxFileSize {
+            throw FileLoaderError.tooLarge
+        }
         let data = try Data(contentsOf: url)
         return try decode(data)
     }

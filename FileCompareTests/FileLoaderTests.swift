@@ -103,4 +103,17 @@ final class FileLoaderTests: XCTestCase {
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
     }
+
+    func testReadRefusesFilesOverTheCapWithoutReadingThem() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.truncate(atOffset: UInt64(FileLoader.maxFileSize + 1)) // sparse: no real disk use
+        try handle.close()
+
+        XCTAssertThrowsError(try FileLoader.readText(from: url)) { error in
+            XCTAssertEqual(error as? FileLoaderError, .tooLarge)
+        }
+    }
 }

@@ -57,6 +57,8 @@ Requires macOS 13 or later.
   freezing on huge files.
 - **Files over 50MB show a warning** and may make the app slow. It still
   works; it's just honest about it.
+- **Files over 100MB don't open** (a message says why). Past that size the
+  app could run out of memory instead of just getting slow.
 
 ## Uninstall
 

@@ -6,12 +6,14 @@ import AppKit
 /// active when the error happened.
 enum CompareError: Equatable {
     case fileOver50MB
+    case fileTooLarge
     case notText
     case system(String)
 
     func message(_ t: Strings) -> String {
         switch self {
         case .fileOver50MB: return t.fileOver50MB
+        case .fileTooLarge: return t.fileTooLarge
         case .notText: return t.notTextError
         case .system(let description): return description
         }
@@ -20,14 +22,24 @@ enum CompareError: Equatable {
 
 @MainActor
 final class CompareViewModel: ObservableObject {
-    @Published var leftText: String = ""
-    @Published var rightText: String = ""
+    @Published var leftText: String = "" {
+        didSet { leftLineCount = LineDiffEngine.splitLines(leftText).count }
+    }
+    @Published var rightText: String = "" {
+        didSet { rightLineCount = LineDiffEngine.splitLines(rightText).count }
+    }
+    /// Kept in step with the text (split once per change) instead of
+    /// re-splitting the whole file every time a panel asks for its lines.
+    private(set) var leftLineCount = 0
+    private(set) var rightLineCount = 0
     @Published var leftURL: URL?
     @Published var rightURL: URL?
     @Published var options = DiffOptions()
     @Published private(set) var diffResult: DiffResult = .empty
     @Published private(set) var diffRevision: Int = 0
     @Published private(set) var isComputing = false
+    /// Panels whose file is still being read and decoded.
+    @Published private(set) var loadingSides: Set<PanelSide> = []
     @Published var activeError: CompareError?
     @Published var currentChangeIndex: Int = -1
     @Published var scrollRequestLeftLine: Int?
@@ -57,36 +69,48 @@ final class CompareViewModel: ObservableObject {
     /// same way instead of silently converting it to UTF-8.
     private var leftEncoding = TextEncoding.utf8
     private var rightEncoding = TextEncoding.utf8
+    /// The in-flight load for each panel, so opening another file into the
+    /// same panel cancels it instead of letting the older file land last.
+    private var loadTasks: [PanelSide: Task<Void, Never>] = [:]
 
     init() {
-        // Reads the last-opened files off the main actor: `loadFile(_:into:)`
-        // (used by the open panel / drag-and-drop, where a brief synchronous
-        // read alongside an already-modal or already-in-flight user action is
-        // unnoticeable) does its disk read inline. Doing that inline here too
-        // would block window creation itself on disk I/O whenever the last
-        // panel remembered a large file.
+        // Every load (recent files here, the open panel, drag-and-drop) reads
+        // and decodes off the main actor: doing it inline would freeze the
+        // window, or block its creation, for as long as a large file takes.
         let recent = RecentFilesStore.load()
-        Task { [weak self] in
-            if let left = recent.left { await self?.loadFileOffMainActor(left, into: .left) }
+        if let left = recent.left { startLoading(left, into: .left) }
+        if let right = recent.right { startLoading(right, into: .right) }
+    }
+
+    private func startLoading(_ url: URL, into side: PanelSide) {
+        loadTasks[side]?.cancel()
+        loadTasks[side] = Task { [weak self] in
+            await self?.loadFileOffMainActor(url, into: side)
             guard let self, !Task.isCancelled else { return }
-            if let right = recent.right { await self.loadFileOffMainActor(right, into: .right) }
-            guard !Task.isCancelled else { return }
+            self.loadTasks[side] = nil
             self.scheduleDiff(debounce: false)
         }
     }
 
-    private func loadFileOffMainActor(_ url: URL, into side: PanelSide) async {
+    /// `read` is only swapped out by tests, to check where it runs.
+    func loadFileOffMainActor(
+        _ url: URL,
+        into side: PanelSide,
+        read: @escaping @Sendable (URL) throws -> DecodedText = { try FileLoader.readText(from: $0) }
+    ) async {
         if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
             activeError = .fileOver50MB
         }
+        loadingSides.insert(side)
         let result = await Task.detached(priority: .userInitiated) { () -> Result<DecodedText, Error> in
-            Result { try FileLoader.readText(from: url) }
+            Result { try read(url) }
         }.value
+        // A newer load into this panel replaced this one (and owns
+        // `loadingSides` now): drop the stale result.
+        guard !Task.isCancelled else { return }
+        loadingSides.remove(side)
         applyLoadResult(result, url: url, side: side)
     }
-
-    var leftLineCount: Int { LineDiffEngine.splitLines(leftText).count }
-    var rightLineCount: Int { LineDiffEngine.splitLines(rightText).count }
 
     func leftPanelLines() -> [PanelLineInfo] { diffResult.panelLines(for: .left, count: leftLineCount) }
     func rightPanelLines() -> [PanelLineInfo] { diffResult.panelLines(for: .right, count: rightLineCount) }
@@ -234,17 +258,8 @@ final class CompareViewModel: ObservableObject {
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
         if panel.runModal() == .OK, let url = panel.url {
-            loadFile(url, into: side)
-            scheduleDiff(debounce: false)
+            startLoading(url, into: side)
         }
-    }
-
-    func loadFile(_ url: URL, into side: PanelSide) {
-        if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
-            activeError = .fileOver50MB
-        }
-        let result = Result { try FileLoader.readText(from: url) }
-        applyLoadResult(result, url: url, side: side)
     }
 
     private func applyLoadResult(_ result: Result<DecodedText, Error>, url: URL, side: PanelSide) {
@@ -253,7 +268,11 @@ final class CompareViewModel: ObservableObject {
         case .success(let value):
             decoded = value
         case .failure(let error):
-            activeError = (error as? FileLoaderError) == .notText ? .notText : .system(error.localizedDescription)
+            switch error as? FileLoaderError {
+            case .notText: activeError = .notText
+            case .tooLarge: activeError = .fileTooLarge
+            default: activeError = .system(error.localizedDescription)
+            }
             return
         }
         switch side {
@@ -270,8 +289,7 @@ final class CompareViewModel: ObservableObject {
     }
 
     func handleDrop(url: URL, side: PanelSide) {
-        loadFile(url, into: side)
-        scheduleDiff(debounce: false)
+        startLoading(url, into: side)
     }
 
     func save(side: PanelSide) {

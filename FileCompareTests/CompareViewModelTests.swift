@@ -29,17 +29,71 @@ final class CompareViewModelTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    func testSavingKeepsLatin1Encoding() throws {
+    func testSavingKeepsLatin1Encoding() async throws {
         let url = directory.appendingPathComponent("latin1.txt")
         let latin1 = Data([0x61, 0xF1, 0x6F, 0x0A]) // "año\n" in ISO Latin-1
         try latin1.write(to: url)
 
         let viewModel = CompareViewModel()
-        viewModel.loadFile(url, into: .left)
+        await viewModel.loadFileOffMainActor(url, into: .left)
         XCTAssertEqual(viewModel.leftText, "año\n")
         viewModel.save(side: .left)
 
         XCTAssertNil(viewModel.activeError)
         XCTAssertEqual(try Data(contentsOf: url), latin1)
+    }
+
+    func testLoadingReadsOffTheMainThread() async throws {
+        let url = directory.appendingPathComponent("a.txt")
+        try Data("uno\ndos\n".utf8).write(to: url)
+        let readOnMainThread = LockedFlag()
+
+        let viewModel = CompareViewModel()
+        await viewModel.loadFileOffMainActor(url, into: .left) { url in
+            readOnMainThread.set(Thread.isMainThread)
+            return try FileLoader.readText(from: url)
+        }
+
+        XCTAssertEqual(readOnMainThread.value, false)
+        XCTAssertEqual(viewModel.leftText, "uno\ndos\n")
+        XCTAssertEqual(viewModel.leftLineCount, LineDiffEngine.splitLines("uno\ndos\n").count)
+        XCTAssertTrue(viewModel.loadingSides.isEmpty)
+    }
+
+    func testFileOverTheCapIsRefused() async throws {
+        let url = directory.appendingPathComponent("huge.txt")
+        try makeSparseFile(at: url, size: FileLoader.maxFileSize + 1)
+
+        let viewModel = CompareViewModel()
+        await viewModel.loadFileOffMainActor(url, into: .left)
+
+        XCTAssertEqual(viewModel.activeError, .fileTooLarge)
+        XCTAssertEqual(viewModel.leftText, "")
+        XCTAssertNil(viewModel.leftURL)
+    }
+
+    /// Takes no disk space: the size is set without writing any bytes.
+    private func makeSparseFile(at url: URL, size: Int) throws {
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.truncate(atOffset: UInt64(size))
+        try handle.close()
+    }
+}
+
+private final class LockedFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var stored: Bool?
+
+    var value: Bool? {
+        lock.lock()
+        defer { lock.unlock() }
+        return stored
+    }
+
+    func set(_ newValue: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        stored = newValue
     }
 }

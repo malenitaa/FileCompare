@@ -45,9 +45,11 @@ untrusted bytes:
   anything else that looks binary (heavy control-byte density) is rejected
   with an error instead of being force-decoded into garbage. The reasoning is
   documented line by line in `FileCompare/Support/FileLoader.swift`.
-- Large files don't hang the UI: word-level highlighting is skipped past a
-  size/line threshold (`DiffOptions.swift`), and diffs compute on a
-  background task that gets cancelled when a newer edit supersedes it.
+- Large files don't hang the UI: files are read and decoded off the main
+  thread, anything over 100MB (`FileLoader.maxFileSize`) is refused before
+  being read, word-level highlighting is skipped past a size/line threshold
+  (`DiffOptions.swift`), and diffs compute on a background task that gets
+  cancelled when a newer edit supersedes it.
 - The remembered recent paths are checked for existence before loading, and
   a file that fails to load just shows an error banner.
 
