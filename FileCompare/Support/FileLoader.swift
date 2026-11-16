@@ -4,17 +4,36 @@ import Foundation
 // in-app language selector — no LocalizedError text hardcoded here.
 enum FileLoaderError: Error, Equatable {
     case notText
+    /// The text has characters the file's original encoding can't hold.
+    case notRepresentable
+}
+
+/// How a file's bytes were decoded, so saving can write them back the same way.
+struct TextEncoding: Equatable {
+    var encoding: String.Encoding
+    /// The byte-order mark the file started with. Foundation strips it when
+    /// decoding, so it's kept here to be written back on save.
+    var bom: [UInt8] = []
+
+    static let utf8 = TextEncoding(encoding: .utf8)
+}
+
+struct DecodedText: Equatable {
+    var text: String
+    var encoding: TextEncoding
 }
 
 enum FileLoader {
+    private static let utf8BOM: [UInt8] = [0xEF, 0xBB, 0xBF]
+
     /// Tries UTF-16 (BOM or NUL pattern), then UTF-8, then falls back to a
     /// handful of common single-byte encodings.
-    static func readText(from url: URL) throws -> String {
+    static func readText(from url: URL) throws -> DecodedText {
         let data = try Data(contentsOf: url)
         return try decode(data)
     }
 
-    static func decode(_ data: Data) throws -> String {
+    static func decode(_ data: Data) throws -> DecodedText {
         // UTF-16 is NOT self-validating without a BOM: almost any even-length
         // byte pair is *some* valid UTF-16 code unit, and Foundation silently
         // drops a trailing odd byte rather than failing. Decoding as UTF-16
@@ -23,8 +42,8 @@ enum FileLoader {
         // single wrong UTF-16 character if tried here) — so only take this
         // path when a real BOM says the bytes are actually UTF-16, or when the
         // NUL pattern below does.
-        if hasUTF16BOM(data), let text = String(data: data, encoding: .utf16) {
-            return text
+        if let encoding = utf16BOMEncoding(data), let text = String(data: data, encoding: .utf16) {
+            return DecodedText(text: text, encoding: TextEncoding(encoding: encoding, bom: Array(data.prefix(2))))
         }
         // NUL is valid UTF-8, so this check has to run *before* trusting
         // UTF-8: otherwise BOM-less UTF-16 or a NUL-filled binary decodes as
@@ -34,13 +53,16 @@ enum FileLoader {
         if data.contains(0) {
             if let encoding = bomlessUTF16Encoding(data),
                let text = String(data: data, encoding: encoding) {
-                return text
+                return DecodedText(text: text, encoding: TextEncoding(encoding: encoding))
             }
             throw FileLoaderError.notText
         }
         // UTF-8 is self-validating (its multi-byte structure makes false
         // positives on arbitrary bytes vanishingly unlikely) — trust it outright.
-        if let text = String(data: data, encoding: .utf8) { return text }
+        if let text = String(data: data, encoding: .utf8) {
+            let bom = data.starts(with: utf8BOM) ? utf8BOM : []
+            return DecodedText(text: text, encoding: TextEncoding(encoding: .utf8, bom: bom))
+        }
 
         // .isoLatin1/.windowsCP1252 map every possible byte value to *some*
         // character, so they never fail to decode — which means, unguarded,
@@ -51,15 +73,18 @@ enum FileLoader {
         if looksBinary(data) {
             throw FileLoaderError.notText
         }
-        if let text = String(data: data, encoding: .isoLatin1) { return text }
-        if let text = String(data: data, encoding: .windowsCP1252) { return text }
+        for encoding in [String.Encoding.isoLatin1, .windowsCP1252] {
+            if let text = String(data: data, encoding: encoding) {
+                return DecodedText(text: text, encoding: TextEncoding(encoding: encoding))
+            }
+        }
         throw FileLoaderError.notText
     }
 
-    private static func hasUTF16BOM(_ data: Data) -> Bool {
-        guard data.count >= 2 else { return false }
-        let first2 = data.prefix(2)
-        return first2.elementsEqual([0xFF, 0xFE]) || first2.elementsEqual([0xFE, 0xFF])
+    private static func utf16BOMEncoding(_ data: Data) -> String.Encoding? {
+        if data.starts(with: [0xFF, 0xFE]) { return .utf16LittleEndian }
+        if data.starts(with: [0xFE, 0xFF]) { return .utf16BigEndian }
+        return nil
     }
 
     /// Mostly-Latin text in BOM-less UTF-16 has a NUL in one byte of nearly
@@ -90,8 +115,14 @@ enum FileLoader {
         return Double(controlBytes) / Double(sample.count) > 0.01
     }
 
-    static func write(_ text: String, to url: URL) throws {
-        try text.write(to: url, atomically: true, encoding: .utf8)
+    /// Writes `text` back in the encoding (and BOM) it was read with. Throws
+    /// `notRepresentable` instead of silently switching encodings when the
+    /// text has characters that encoding can't hold.
+    static func write(_ text: String, to url: URL, encoding: TextEncoding) throws {
+        guard let body = text.data(using: encoding.encoding) else {
+            throw FileLoaderError.notRepresentable
+        }
+        try (Data(encoding.bom) + body).write(to: url, options: .atomic)
     }
 
     static func fileSize(at url: URL) -> Int? {

@@ -55,6 +55,11 @@ struct Strings {
     let fileOver50MB: String
     let notTextError: String
     let ok: String
+    let cancel: String
+    let saveAsUTF8Title: String
+    /// `%@` is the file's original encoding.
+    let saveAsUTF8Message: String
+    let saveAsUTF8Button: String
 
     let undoSortAsc: String
     let undoSortDesc: String
@@ -99,6 +104,10 @@ extension Strings {
         fileOver50MB: "The file is over 50MB; the app may become slow.",
         notTextError: "The file doesn't look like plain text (unrecognized encoding).",
         ok: "OK",
+        cancel: "Cancel",
+        saveAsUTF8Title: "Save as UTF-8?",
+        saveAsUTF8Message: "The text has characters that can't be saved in the file's original encoding (%@).",
+        saveAsUTF8Button: "Save as UTF-8",
         undoSortAsc: "Sort A-Z",
         undoSortDesc: "Sort Z-A",
         undoCopy: "Copy",
@@ -140,6 +149,10 @@ extension Strings {
         fileOver50MB: "El archivo supera 50MB; la app puede volverse lenta.",
         notTextError: "El archivo no parece ser texto plano (encoding no reconocido).",
         ok: "OK",
+        cancel: "Cancelar",
+        saveAsUTF8Title: "¿Guardar como UTF-8?",
+        saveAsUTF8Message: "El texto tiene caracteres que no se pueden guardar en el encoding original del archivo (%@).",
+        saveAsUTF8Button: "Guardar como UTF-8",
         undoSortAsc: "Ordenar A-Z",
         undoSortDesc: "Ordenar Z-A",
         undoCopy: "Copiar",
