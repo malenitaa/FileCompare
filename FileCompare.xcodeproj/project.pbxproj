@@ -16,6 +16,7 @@
 		53206C3D102B014B3FA6385B /* FileLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A60714F3EE34EBE88D45F8 /* FileLoaderTests.swift */; };
 		61E4636959C33DE76F7D8441 /* SetDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE48CC4F13382993DADBD01 /* SetDiffView.swift */; };
 		698D951CCB9FD669F191B8FE /* SetDiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E613C11AF36A16E0E6A64655 /* SetDiffEngineTests.swift */; };
+		769D283B4C8C3C2018CC4963 /* CompareViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2467DBA9842939DFCED04EC0 /* CompareViewModelTests.swift */; };
 		78EB0360E4BC5C1886C78185 /* WordDiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DBE83B76AF812E501CACBA /* WordDiffEngineTests.swift */; };
 		7F7757E33965BBBF9B8B7544 /* LineDiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93DC0DBF29A3A26DC651C258 /* LineDiffEngine.swift */; };
 		96DD557A55E3F8C90778578F /* SideBySideDiffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77227D91BC881716B4365DD5 /* SideBySideDiffView.swift */; };
@@ -48,6 +49,7 @@
 		08B0AA56F075FD1C666E2D54 /* FileCompareApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCompareApp.swift; sourceTree = "<group>"; };
 		0D8BDD59CFC91923CC76CD99 /* WordDiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDiffEngine.swift; sourceTree = "<group>"; };
 		1B26F3926A28DA77BAA60085 /* FileCompareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FileCompareTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2467DBA9842939DFCED04EC0 /* CompareViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompareViewModelTests.swift; sourceTree = "<group>"; };
 		5B99716ED4F75802A6B87A8E /* ScrollSyncCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollSyncCoordinatorTests.swift; sourceTree = "<group>"; };
 		6EE48CC4F13382993DADBD01 /* SetDiffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetDiffView.swift; sourceTree = "<group>"; };
 		760097BF1A09AAC828B902AA /* DiffTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffTextView.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 		C3AFFCC81ED83B0C3338B1F5 /* FileCompareTests */ = {
 			isa = PBXGroup;
 			children = (
+				2467DBA9842939DFCED04EC0 /* CompareViewModelTests.swift */,
 				B8A60714F3EE34EBE88D45F8 /* FileLoaderTests.swift */,
 				966B1284CE616BA9CB7C4B69 /* LineDiffEngineTests.swift */,
 				5B99716ED4F75802A6B87A8E /* ScrollSyncCoordinatorTests.swift */,
@@ -292,6 +295,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				769D283B4C8C3C2018CC4963 /* CompareViewModelTests.swift in Sources */,
 				53206C3D102B014B3FA6385B /* FileLoaderTests.swift in Sources */,
 				AFE83C784810AB07532A27B2 /* LineDiffEngineTests.swift in Sources */,
 				27424ED73098EC9F693D2593 /* ScrollSyncCoordinatorTests.swift in Sources */,

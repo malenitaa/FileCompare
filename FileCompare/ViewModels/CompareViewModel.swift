@@ -53,6 +53,10 @@ final class CompareViewModel: ObservableObject {
     private var workTask: Task<DiffResult?, Never>?
     private weak var leftTextView: NSTextView?
     private weak var rightTextView: NSTextView?
+    /// Encoding each panel's file was read with, so saving writes it back the
+    /// same way instead of silently converting it to UTF-8.
+    private var leftEncoding = TextEncoding.utf8
+    private var rightEncoding = TextEncoding.utf8
 
     init() {
         // Reads the last-opened files off the main actor: `loadFile(_:into:)`
@@ -75,7 +79,7 @@ final class CompareViewModel: ObservableObject {
         if let size = FileLoader.fileSize(at: url), size > 50 * 1024 * 1024 {
             activeError = .fileOver50MB
         }
-        let result = await Task.detached(priority: .userInitiated) { () -> Result<String, Error> in
+        let result = await Task.detached(priority: .userInitiated) { () -> Result<DecodedText, Error> in
             Result { try FileLoader.readText(from: url) }
         }.value
         applyLoadResult(result, url: url, side: side)
@@ -243,22 +247,24 @@ final class CompareViewModel: ObservableObject {
         applyLoadResult(result, url: url, side: side)
     }
 
-    private func applyLoadResult(_ result: Result<String, Error>, url: URL, side: PanelSide) {
-        let text: String
+    private func applyLoadResult(_ result: Result<DecodedText, Error>, url: URL, side: PanelSide) {
+        let decoded: DecodedText
         switch result {
         case .success(let value):
-            text = value
+            decoded = value
         case .failure(let error):
             activeError = (error as? FileLoaderError) == .notText ? .notText : .system(error.localizedDescription)
             return
         }
         switch side {
         case .left:
-            leftText = text
+            leftText = decoded.text
             leftURL = url
+            leftEncoding = decoded.encoding
         case .right:
-            rightText = text
+            rightText = decoded.text
             rightURL = url
+            rightEncoding = decoded.encoding
         }
         persistRecents()
     }
@@ -272,10 +278,10 @@ final class CompareViewModel: ObservableObject {
         switch side {
         case .left:
             guard let url = leftURL else { saveAs(side: side); return }
-            write(leftText, to: url)
+            write(leftText, to: url, side: side)
         case .right:
             guard let url = rightURL else { saveAs(side: side); return }
-            write(rightText, to: url)
+            write(rightText, to: url, side: side)
         }
     }
 
@@ -284,21 +290,51 @@ final class CompareViewModel: ObservableObject {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         switch side {
         case .left:
-            write(leftText, to: url)
+            guard write(leftText, to: url, side: side) else { return }
             leftURL = url
         case .right:
-            write(rightText, to: url)
+            guard write(rightText, to: url, side: side) else { return }
             rightURL = url
         }
         persistRecents()
     }
 
-    private func write(_ text: String, to url: URL) {
+    /// Saves in the panel's original encoding. If the text no longer fits in
+    /// it (say, "€" typed into a Latin-1 file), asks before switching to
+    /// UTF-8 rather than changing the file's encoding behind the user's back.
+    @discardableResult
+    private func write(_ text: String, to url: URL, side: PanelSide) -> Bool {
+        let encoding = side == .left ? leftEncoding : rightEncoding
         do {
-            try FileLoader.write(text, to: url)
+            try FileLoader.write(text, to: url, encoding: encoding)
+            return true
+        } catch FileLoaderError.notRepresentable {
+            guard confirmSaveAsUTF8(insteadOf: encoding) else { return false }
+            do {
+                try FileLoader.write(text, to: url, encoding: .utf8)
+            } catch {
+                activeError = .system(error.localizedDescription)
+                return false
+            }
+            switch side {
+            case .left: leftEncoding = .utf8
+            case .right: rightEncoding = .utf8
+            }
+            return true
         } catch {
             activeError = .system(error.localizedDescription)
+            return false
         }
+    }
+
+    private func confirmSaveAsUTF8(insteadOf encoding: TextEncoding) -> Bool {
+        let t = L10n.shared.t
+        let alert = NSAlert()
+        alert.messageText = t.saveAsUTF8Title
+        alert.informativeText = String(format: t.saveAsUTF8Message, String.localizedName(of: encoding.encoding))
+        alert.addButton(withTitle: t.saveAsUTF8Button)
+        alert.addButton(withTitle: t.cancel)
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     func copy(from side: PanelSide) {
