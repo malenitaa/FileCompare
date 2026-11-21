@@ -38,10 +38,12 @@ The only external input is the files you open, and they are treated as
 untrusted bytes:
 
 - `FileLoader.decode` validates encodings instead of guessing blindly:
-  UTF-8 is tried first (self-validating), UTF-16 is only accepted with a
-  real BOM (without one, Latin-1 text silently mis-decodes), and anything
-  that looks binary (NUL bytes, heavy control-byte density) is rejected with
-  an error instead of being force-decoded into garbage. The reasoning is
+  UTF-16 is only accepted with a real BOM or, without one, when its NUL
+  bytes fall on one side of every byte pair (otherwise Latin-1 text silently
+  mis-decodes); any other file with a NUL byte is rejected before UTF-8 is
+  tried, since NUL is valid UTF-8; UTF-8 comes next (self-validating), and
+  anything else that looks binary (heavy control-byte density) is rejected
+  with an error instead of being force-decoded into garbage. The reasoning is
   documented line by line in `FileCompare/Support/FileLoader.swift`.
 - Large files don't hang the UI: word-level highlighting is skipped past a
   size/line threshold (`DiffOptions.swift`), and diffs compute on a

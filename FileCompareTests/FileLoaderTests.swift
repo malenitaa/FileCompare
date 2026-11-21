@@ -32,4 +32,32 @@ final class FileLoaderTests: XCTestCase {
         let data = text.data(using: .utf16)! // Foundation prepends a BOM here.
         XCTAssertEqual(try FileLoader.decode(data), text)
     }
+
+    func testUTF16LittleEndianWithoutBOMDecodes() throws {
+        // NUL is valid UTF-8, so these bytes used to be accepted as UTF-8 and
+        // shown as "h\0o\0l\0a\0…" instead of being recognised as UTF-16.
+        let text = "hola mundo"
+        let data = text.data(using: .utf16LittleEndian)!
+        XCTAssertEqual(try FileLoader.decode(data), text)
+    }
+
+    func testUTF16BigEndianWithoutBOMDecodes() throws {
+        let text = "hola mundo"
+        let data = text.data(using: .utf16BigEndian)!
+        XCTAssertEqual(try FileLoader.decode(data), text)
+    }
+
+    func testNULFilledDataIsRejected() {
+        let data = Data(repeating: 0, count: 64)
+        XCTAssertThrowsError(try FileLoader.decode(data)) { error in
+            XCTAssertEqual(error as? FileLoaderError, .notText)
+        }
+    }
+
+    func testASCIIWithStrayNULIsRejected() {
+        let data = Data("abc\0def".utf8)
+        XCTAssertThrowsError(try FileLoader.decode(data)) { error in
+            XCTAssertEqual(error as? FileLoaderError, .notText)
+        }
+    }
 }
