@@ -41,6 +41,10 @@ struct SideBySideDiffView: View {
                     .font(.subheadline)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                if viewModel.loadingSides.contains(side) {
+                    ProgressView()
+                        .controlSize(.small)
+                }
                 Spacer()
                 Button {
                     viewModel.openFile(into: side)

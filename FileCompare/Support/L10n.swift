@@ -53,6 +53,7 @@ struct Strings {
 
     let largeFileBanner: String
     let fileOver50MB: String
+    let fileTooLarge: String
     let notTextError: String
     let ok: String
     let cancel: String
@@ -102,6 +103,7 @@ extension Strings {
         copyListHelp: "Copy list",
         largeFileBanner: "Large file: word-level highlighting was disabled to keep the app responsive.",
         fileOver50MB: "The file is over 50MB; the app may become slow.",
+        fileTooLarge: "The file is over 100MB, too large to open.",
         notTextError: "The file doesn't look like plain text (unrecognized encoding).",
         ok: "OK",
         cancel: "Cancel",
@@ -147,6 +149,7 @@ extension Strings {
         copyListHelp: "Copiar lista",
         largeFileBanner: "Archivo grande: el resaltado por palabra se desactivó para mantener la app responsiva.",
         fileOver50MB: "El archivo supera 50MB; la app puede volverse lenta.",
+        fileTooLarge: "El archivo supera 100MB, es demasiado grande para abrirlo.",
         notTextError: "El archivo no parece ser texto plano (encoding no reconocido).",
         ok: "OK",
         cancel: "Cancelar",
