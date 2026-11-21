@@ -74,16 +74,22 @@ enum FileLoader {
             return DecodedText(text: text, encoding: TextEncoding(encoding: .utf8, bom: bom))
         }
 
-        // .isoLatin1/.windowsCP1252 map every possible byte value to *some*
-        // character, so they never fail to decode — which means, unguarded,
-        // they'll happily turn a PNG or a compiled binary into text-shaped
-        // garbage instead of reporting notText. Reject anything that looks
-        // binary (a heavy concentration of control bytes; NULs were already
-        // handled above) before trying them.
+        // .isoLatin1 maps every possible byte value to *some* character and
+        // .windowsCP1252 all but five, so they (almost) never fail to decode
+        // — which means, unguarded, they'll happily turn a PNG or a compiled
+        // binary into text-shaped garbage instead of reporting notText.
+        // Reject anything that looks binary (a heavy concentration of control
+        // bytes; NULs were already handled above) before trying them.
         if looksBinary(data) {
             throw FileLoaderError.notText
         }
-        for encoding in [String.Encoding.isoLatin1, .windowsCP1252] {
+        // Windows-1252 goes first: it agrees with Latin-1 everywhere except
+        // 0x80-0x9F, where it has "€", curly quotes and dashes and Latin-1
+        // only has invisible control characters. Since Latin-1 never fails,
+        // trying it first meant Windows-1252 was never reached. Windows-1252
+        // rejects its five undefined bytes (0x81, 0x8D, 0x8F, 0x90, 0x9D), and
+        // Latin-1 takes those files.
+        for encoding in [String.Encoding.windowsCP1252, .isoLatin1] {
             if let text = String(data: data, encoding: encoding) {
                 return DecodedText(text: text, encoding: TextEncoding(encoding: encoding))
             }

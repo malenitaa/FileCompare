@@ -61,9 +61,32 @@ final class FileLoaderTests: XCTestCase {
         }
     }
 
-    func testDecodeReportsLatin1Encoding() throws {
+    func testWindows1252PunctuationDecodes() throws {
+        // Bytes 0x80-0x9F are printable in Windows-1252 but C1 control
+        // characters in Latin-1, so trying Latin-1 first hid them.
+        let data = Data([0x31, 0x30, 0x20, 0x80, 0x20, 0x93, 0x68, 0x6F, 0x6C, 0x61, 0x94, 0x20, 0x96])
+        let decoded = try FileLoader.decode(data)
+        XCTAssertEqual(decoded, DecodedText(text: "10 € “hola” –", encoding: TextEncoding(encoding: .windowsCP1252)))
+    }
+
+    func testSingleByteTextReportsWindows1252() throws {
         let decoded = try FileLoader.decode(Data([0x61, 0xF1, 0x6F])) // "año"
-        XCTAssertEqual(decoded, DecodedText(text: "año", encoding: TextEncoding(encoding: .isoLatin1)))
+        XCTAssertEqual(decoded, DecodedText(text: "año", encoding: TextEncoding(encoding: .windowsCP1252)))
+    }
+
+    func testBytesUndefinedInWindows1252FallBackToLatin1() throws {
+        // 0x81 has no character in Windows-1252, so that decode fails and
+        // Latin-1 (which maps every byte) takes the file.
+        let decoded = try FileLoader.decode(Data([0x61, 0x81, 0xF1]))
+        XCTAssertEqual(decoded, DecodedText(text: "a\u{81}ñ", encoding: TextEncoding(encoding: .isoLatin1)))
+    }
+
+    func testEuroTypedIntoSingleByteFileSavesInPlace() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let decoded = try FileLoader.decode(Data([0x61, 0xF1, 0x6F])) // "año"
+        try FileLoader.write(decoded.text + " €", to: url, encoding: decoded.encoding)
+        XCTAssertEqual(try Data(contentsOf: url), Data([0x61, 0xF1, 0x6F, 0x20, 0x80]))
     }
 
     func testWriteKeepsLatin1Bytes() throws {
